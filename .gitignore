@@ -1,0 +1,21 @@
+# Secrets (never commit these)
+.env
+*.jks
+*.keystore
+key.properties
+google-services.json
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+
+# Flutter / Android
+build/
+.dart_tool/
+local.properties
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
