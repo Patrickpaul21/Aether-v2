@@ -1,0 +1,5 @@
+cd ~/Aether-v2/server
+python --version
+python -m venv .venv
+source .venv/Scripts/activate
+pip install fastapi "uvicorn[standard]" yt-dlp
