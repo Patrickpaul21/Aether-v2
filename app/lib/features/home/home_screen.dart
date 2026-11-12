@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               childAspectRatio: 3.0,
-              children: [for (final t in mockTracks) QuickTile(track: t)],
+              children: [for (final t in mockTracks.take(6)) QuickTile(track: t)],
             ),
             const SizedBox(height: 28),
             const Text('Made for you',
