@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const background = Color(0xFF000000);
-  static const surface = Color(0xFF111113);
+  static const background = Color(0xFF121212);
+  static const surface = Color(0xFF181818);
+  static const elevated = Color(0xFF282828);
   static const textPrimary = Color(0xFFFFFFFF);
-  static const textSecondary = Color(0xFF9A9AA0);
-  static const accent = Color(0xFF8B5CF6);
+  static const textSecondary = Color(0xFFB3B3B3);
+  static const accent = Color(0xFF1DB954);
 }
 
 ThemeData buildTheme() => ThemeData(
@@ -18,6 +19,6 @@ ThemeData buildTheme() => ThemeData(
       ),
       navigationBarTheme: const NavigationBarThemeData(
         backgroundColor: AppColors.background,
-        indicatorColor: AppColors.surface,
+        indicatorColor: Colors.transparent,
       ),
     );
