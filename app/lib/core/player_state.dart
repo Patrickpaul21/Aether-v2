@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../sources/music_source.dart';
+import 'errors.dart';
 import 'library_state.dart';
 import 'track.dart';
 
@@ -73,7 +74,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     } catch (e) {
       if (id != _request) return;
       _fetching = false;
-      state = PlayerStatus(track: t, error: 'Play failed: $e');
+      state = PlayerStatus(track: t, error: friendlyError(e));
     }
   }
 

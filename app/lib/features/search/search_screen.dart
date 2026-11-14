@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/cover_art.dart';
+import '../../core/errors.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
 import '../../core/track.dart';
@@ -59,11 +60,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         _results = results;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (id != _request) return;
       setState(() {
         _results = const [];
-        _error = "Couldn't reach the server. Check the address in Settings.";
+        _error = friendlyError(e);
         _loading = false;
       });
     }
