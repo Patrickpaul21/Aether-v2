@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/settings.dart';
 import 'core/theme.dart';
+import 'sources/device_youtube_source.dart';
+import 'sources/music_source.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +17,10 @@ Future<void> main() async {
   );
   final prefs = await SharedPreferences.getInstance();
   runApp(ProviderScope(
-    overrides: [prefsProvider.overrideWithValue(prefs)],
+    overrides: [
+      prefsProvider.overrideWithValue(prefs),
+      musicSourceProvider.overrideWithValue(DeviceYoutubeSource()),
+    ],
     child: const AetherApp(),
   ));
 }

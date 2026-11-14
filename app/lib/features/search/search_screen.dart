@@ -59,11 +59,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         _results = results;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (id != _request) return;
       setState(() {
         _results = const [];
-        _error = "Couldn't reach the server. Check the address in Settings.";
+        _error = "Search failed: $e";
         _loading = false;
       });
     }
