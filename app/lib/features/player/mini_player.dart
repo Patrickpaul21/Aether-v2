@@ -41,17 +41,28 @@ class MiniPlayer extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w700)),
-                  Text(track.artist,
+                  Text(s.error ?? track.artist,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary)),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: s.error != null
+                              ? Colors.redAccent
+                              : AppColors.textSecondary)),
                 ],
               ),
             ),
             IconButton(
-              icon: Icon(s.isPlaying ? Icons.pause : Icons.play_arrow),
-              onPressed: () => ref.read(playerProvider.notifier).toggle(),
+              icon: s.isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(s.isPlaying ? Icons.pause : Icons.play_arrow),
+              onPressed: s.isLoading
+                  ? null
+                  : () => ref.read(playerProvider.notifier).toggle(),
             ),
           ],
         ),
