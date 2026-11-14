@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/cover_art.dart';
 import '../../core/mock_tracks.dart';
+import '../../core/player_state.dart';
 import '../../core/theme.dart';
 import '../../core/track.dart';
 
@@ -130,6 +131,7 @@ class _SearchScreenState extends State<SearchScreen> {
       itemBuilder: (_, i) {
         final t = results[i];
         return ListTile(
+          onTap: () => playTrack(context, t),
           leading: CoverArt(track: t, size: 48),
           title: Text(t.title,
               maxLines: 1, overflow: TextOverflow.ellipsis),

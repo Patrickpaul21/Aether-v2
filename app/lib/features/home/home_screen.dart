@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/cover_art.dart';
 import '../../core/mock_tracks.dart';
+import '../../core/player_state.dart';
 import '../../core/theme.dart';
 import '../../core/track.dart';
 
@@ -30,7 +31,9 @@ class HomeScreen extends StatelessWidget {
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               childAspectRatio: 3.0,
-              children: [for (final t in mockTracks.take(6)) QuickTile(track: t)],
+              children: [
+                for (final t in mockTracks.take(6)) QuickTile(track: t)
+              ],
             ),
             const SizedBox(height: 28),
             const Text('Made for you',
@@ -55,23 +58,26 @@ class QuickTile extends StatelessWidget {
   const QuickTile({super.key, required this.track});
 
   @override
-  Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.elevated,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Row(
-          children: [
-            CoverArt(track: track, size: 56),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(track.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700)),
-            ),
-          ],
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: () => playTrack(context, track),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.elevated,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            children: [
+              CoverArt(track: track, size: 56),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(track.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
         ),
       );
 }
@@ -81,24 +87,27 @@ class ShelfCard extends StatelessWidget {
   const ShelfCard({super.key, required this.track});
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 140,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CoverArt(track: track, size: 140),
-            const SizedBox(height: 8),
-            Text(track.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-            Text(track.artist,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary)),
-          ],
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: () => playTrack(context, track),
+        child: SizedBox(
+          width: 140,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CoverArt(track: track, size: 140),
+              const SizedBox(height: 8),
+              Text(track.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700)),
+              Text(track.artist,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary)),
+            ],
+          ),
         ),
       );
 }
