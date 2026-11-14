@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../core/cover_art.dart';
+import '../../core/library_state.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
 
@@ -21,6 +22,7 @@ class NowPlayingScreen extends ConsumerWidget {
     if (track == null) return const Scaffold();
 
     final notifier = ref.read(playerProvider.notifier);
+    final liked = ref.watch(libraryProvider).liked.any((t) => t.id == track.id);
     final hue = (track.id.hashCode % 360).abs().toDouble();
     final artSize = MediaQuery.of(context).size.width - 48;
 
@@ -74,7 +76,7 @@ class NowPlayingScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.shuffle, color: AppColors.textSecondary),
+                    IconButton(icon: Icon(liked ? Icons.favorite : Icons.favorite_border, color: liked ? AppColors.accent : AppColors.textSecondary), onPressed: () => ref.read(libraryProvider.notifier).toggleLike(track)),
                     IconButton(
                       iconSize: 40,
                       icon: const Icon(Icons.skip_previous),

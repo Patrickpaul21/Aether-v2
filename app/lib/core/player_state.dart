@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../sources/music_source.dart';
-import 'mock_tracks.dart';
+import 'library_state.dart';
 import 'track.dart';
 
 class PlayerStatus {
@@ -48,7 +48,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
   }
 
   Future<void> play(Track t, {List<Track>? queue}) async {
-    _queue = queue ?? (mockTracks.any((m) => m.id == t.id) ? mockTracks : [t]);
+    _queue = queue ?? [t];
     final id = ++_request;
     _fetching = true;
     state = PlayerStatus(track: t, isLoading: true);
@@ -68,6 +68,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
       if (id != _request) return;
       _fetching = false;
       state = PlayerStatus(track: t, isPlaying: true);
+      ref.read(libraryProvider.notifier).addToHistory(t);
       _player.play();
     } catch (e) {
       if (id != _request) return;

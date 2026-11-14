@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/cover_art.dart';
-import '../../core/mock_tracks.dart';
+import '../../core/library_state.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
 import '../../core/track.dart';
@@ -13,28 +14,45 @@ String greeting() {
   return 'Good evening';
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(greeting(),
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.w700)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lib = ref.watch(libraryProvider);
+    final history = lib.history;
+    final liked = lib.liked;
+
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(greeting(),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.w700)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => context.push('/settings'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (history.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(
+                child: Text(
+                  'Nothing played yet.\nSearch for a song to get started.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () => context.push('/settings'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+              ),
+            )
+          else ...[
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -43,34 +61,41 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 8,
               childAspectRatio: 3.0,
               children: [
-                for (final t in mockTracks.take(6)) QuickTile(track: t)
+                for (final t in history.take(6))
+                  QuickTile(track: t, queue: history)
               ],
             ),
+          ],
+          if (liked.isNotEmpty) ...[
             const SizedBox(height: 28),
-            const Text('Made for you',
+            const Text('Liked songs',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             SizedBox(
               height: 200,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: mockTracks.length,
+                itemCount: liked.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => ShelfCard(track: mockTracks[i]),
+                itemBuilder: (_, i) =>
+                    ShelfCard(track: liked[i], queue: liked),
               ),
             ),
           ],
-        ),
-      );
+        ],
+      ),
+    );
+  }
 }
 
 class QuickTile extends StatelessWidget {
   final Track track;
-  const QuickTile({super.key, required this.track});
+  final List<Track> queue;
+  const QuickTile({super.key, required this.track, required this.queue});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: () => playTrack(context, track),
+        onTap: () => playTrack(context, track, queue: queue),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.elevated,
@@ -95,11 +120,12 @@ class QuickTile extends StatelessWidget {
 
 class ShelfCard extends StatelessWidget {
   final Track track;
-  const ShelfCard({super.key, required this.track});
+  final List<Track> queue;
+  const ShelfCard({super.key, required this.track, required this.queue});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: () => playTrack(context, track),
+        onTap: () => playTrack(context, track, queue: queue),
         child: SizedBox(
           width: 140,
           child: Column(
