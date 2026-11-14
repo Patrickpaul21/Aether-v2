@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/cover_art.dart';
 import '../../core/mock_tracks.dart';
 import '../../core/player_state.dart';
@@ -18,12 +19,22 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            Text(greeting(),
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(greeting(),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w700)),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () => context.push('/settings'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,

@@ -4,10 +4,12 @@ import 'features/home/home_screen.dart';
 import 'features/library/library_screen.dart';
 import 'features/player/mini_player.dart';
 import 'features/search/search_screen.dart';
+import 'features/settings/settings_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/home',
   routes: [
+    GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => Shell(shell: shell),
       branches: [
