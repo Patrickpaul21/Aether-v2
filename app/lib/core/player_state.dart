@@ -25,6 +25,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
   late final AudioPlayer _player;
   int _request = 0;
   bool _fetching = false;
+  List<Track> _queue = const [];
 
   AudioPlayer get player => _player;
 
@@ -48,7 +49,8 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     if (s.processingState == ProcessingState.completed) next();
   }
 
-  Future<void> play(Track t) async {
+  Future<void> play(Track t, {List<Track>? queue}) async {
+    _queue = queue ?? (mockTracks.any((m) => m.id == t.id) ? mockTracks : [t]);
     final id = ++_request;
     _fetching = true;
     state = PlayerStatus(track: t, isLoading: true);
@@ -64,15 +66,23 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
       }
       final url =
           (jsonDecode(res.body) as Map<String, dynamic>)['url'] as String;
-      await _player.setAudioSource(AudioSource.uri(Uri.parse(url), tag: MediaItem(id: t.id, title: t.title, artist: t.artist)));
+      await _player.setAudioSource(AudioSource.uri(
+        Uri.parse(url),
+        tag: MediaItem(
+          id: t.id,
+          title: t.title,
+          artist: t.artist,
+          artUri: t.coverUrl.isEmpty ? null : Uri.parse(t.coverUrl),
+        ),
+      ));
       if (id != _request) return;
       _fetching = false;
       state = PlayerStatus(track: t, isPlaying: true);
       _player.play();
-    } catch (_) {
+    } catch (e) {
       if (id != _request) return;
       _fetching = false;
-      state = PlayerStatus(track: t, error: "Couldn't play this track");
+      state = PlayerStatus(track: t, error: 'Play failed: $e');
     }
   }
 
@@ -89,10 +99,10 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
 
   void _step(int delta) {
     final current = state.track;
-    if (current == null) return;
-    final i = mockTracks.indexWhere((t) => t.id == current.id);
-    final n = mockTracks.length;
-    play(mockTracks[((i < 0 ? 0 : i) + delta + n) % n]);
+    if (current == null || _queue.isEmpty) return;
+    final i = _queue.indexWhere((t) => t.id == current.id);
+    final n = _queue.length;
+    play(_queue[((i < 0 ? 0 : i) + delta + n) % n], queue: _queue);
   }
 
   void next() => _step(1);
@@ -102,7 +112,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
 final playerProvider =
     NotifierProvider<PlayerNotifier, PlayerStatus>(PlayerNotifier.new);
 
-void playTrack(BuildContext context, Track t) =>
+void playTrack(BuildContext context, Track t, {List<Track>? queue}) =>
     ProviderScope.containerOf(context, listen: false)
         .read(playerProvider.notifier)
-        .play(t);
+        .play(t, queue: queue);
