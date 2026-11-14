@@ -1,13 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 import '../../core/cover_art.dart';
 import '../../core/player_state.dart';
-import '../../core/settings.dart';
 import '../../core/theme.dart';
 import '../../core/track.dart';
+import '../../sources/music_source.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -55,27 +53,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       _error = null;
     });
     try {
-      final base = ref.read(serverUrlProvider);
-      final res = await http
-          .get(Uri.parse('$base/search').replace(queryParameters: {'q': q}))
-          .timeout(const Duration(seconds: 20));
+      final results = await ref.read(musicSourceProvider).search(q);
       if (id != _request) return;
-      if (res.statusCode != 200) {
-        throw Exception('Server returned ${res.statusCode}');
-      }
-      final list =
-          (jsonDecode(res.body) as Map<String, dynamic>)['results'] as List;
       setState(() {
-        _results = list.map((r) {
-          final m = r as Map<String, dynamic>;
-          return Track(
-            id: m['id'] as String,
-            title: (m['title'] as String?) ?? 'Untitled',
-            artist: (m['artist'] as String?) ?? 'Unknown',
-            coverUrl: (m['cover'] as String?) ?? '',
-            source: 'youtube',
-          );
-        }).toList();
+        _results = results;
         _loading = false;
       });
     } catch (_) {

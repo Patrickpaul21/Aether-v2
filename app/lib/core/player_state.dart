@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import '../sources/music_source.dart';
 import 'mock_tracks.dart';
-import 'settings.dart';
 import 'track.dart';
 
 class PlayerStatus {
@@ -56,18 +54,10 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     state = PlayerStatus(track: t, isLoading: true);
     await _player.stop();
     try {
-      final base = ref.read(serverUrlProvider);
-      final res = await http
-          .get(Uri.parse('$base/stream/${t.id}'))
-          .timeout(const Duration(seconds: 30));
+      final info = await ref.read(musicSourceProvider).getStream(t.id);
       if (id != _request) return;
-      if (res.statusCode != 200) {
-        throw Exception('Server returned ${res.statusCode}');
-      }
-      final url =
-          (jsonDecode(res.body) as Map<String, dynamic>)['url'] as String;
       await _player.setAudioSource(AudioSource.uri(
-        Uri.parse(url),
+        Uri.parse(info.url),
         tag: MediaItem(
           id: t.id,
           title: t.title,
