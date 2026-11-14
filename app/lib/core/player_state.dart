@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'mock_tracks.dart';
 import 'settings.dart';
 import 'track.dart';
@@ -63,7 +64,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
       }
       final url =
           (jsonDecode(res.body) as Map<String, dynamic>)['url'] as String;
-      await _player.setUrl(url);
+      await _player.setAudioSource(AudioSource.uri(Uri.parse(url), tag: MediaItem(id: t.id, title: t.title, artist: t.artist)));
       if (id != _request) return;
       _fetching = false;
       state = PlayerStatus(track: t, isPlaying: true);
