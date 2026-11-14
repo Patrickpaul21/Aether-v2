@@ -38,7 +38,7 @@ class CoverArt extends StatelessWidget {
         fit: BoxFit.cover,
         loadingBuilder: (_, child, progress) =>
             progress == null ? child : _fallback(),
-        errorBuilder: (_, __, ___) => _fallback(),
+        errorBuilder: (_, _, _) => _fallback(),
       ),
     );
   }

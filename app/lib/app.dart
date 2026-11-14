@@ -9,18 +9,18 @@ import 'features/settings/settings_screen.dart';
 final router = GoRouter(
   initialLocation: '/home',
   routes: [
-    GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+    GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => Shell(shell: shell),
       branches: [
         StatefulShellBranch(routes: [
-          GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+          GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
         ]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
+          GoRoute(path: '/search', builder: (_, _) => const SearchScreen()),
         ]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/library', builder: (_, __) => const LibraryScreen()),
+          GoRoute(path: '/library', builder: (_, _) => const LibraryScreen()),
         ]),
       ],
     ),
