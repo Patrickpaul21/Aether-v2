@@ -98,7 +98,7 @@ class QuickTile extends StatelessWidget {
         onTap: () => playTrack(context, track, queue: queue),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.elevated,
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(

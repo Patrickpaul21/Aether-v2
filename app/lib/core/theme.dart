@@ -1,24 +1,43 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const background = Color(0xFF121212);
-  static const surface = Color(0xFF181818);
-  static const elevated = Color(0xFF282828);
   static const textPrimary = Color(0xFFFFFFFF);
   static const textSecondary = Color(0xFFB3B3B3);
-  static const accent = Color(0xFF1DB954);
 }
 
-ThemeData buildTheme() => ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.dark(
-        surface: AppColors.surface,
-        primary: AppColors.accent,
+ThemeData buildTheme({required Color accent, required bool amoled}) {
+  final background = amoled ? Colors.black : const Color(0xFF121212);
+  final surface = amoled ? const Color(0xFF0A0A0A) : const Color(0xFF181818);
+  final elevated = amoled ? const Color(0xFF1A1A1A) : const Color(0xFF282828);
+
+  return ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: background,
+    colorScheme: ColorScheme.dark(
+      primary: accent,
+      surface: surface,
+      surfaceContainerHigh: elevated,
+    ),
+    appBarTheme: AppBarTheme(backgroundColor: background),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: background,
+      indicatorColor: Colors.transparent,
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected)
+              ? accent
+              : AppColors.textSecondary,
+        ),
       ),
-      navigationBarTheme: const NavigationBarThemeData(
-        backgroundColor: AppColors.background,
-        indicatorColor: Colors.transparent,
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          fontSize: 12,
+          color: states.contains(WidgetState.selected)
+              ? accent
+              : AppColors.textSecondary,
+        ),
       ),
-    );
+    ),
+  );
+}

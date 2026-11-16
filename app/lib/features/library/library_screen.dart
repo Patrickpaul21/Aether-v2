@@ -67,7 +67,7 @@ class LibraryScreen extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: AppColors.textSecondary)),
                 trailing: IconButton(
-                  icon: const Icon(Icons.favorite, color: AppColors.accent),
+                  icon: Icon(Icons.favorite, color: Theme.of(context).colorScheme.primary),
                   onPressed: () =>
                       ref.read(libraryProvider.notifier).toggleLike(t),
                 ),

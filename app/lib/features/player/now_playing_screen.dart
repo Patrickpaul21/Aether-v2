@@ -34,7 +34,7 @@ class NowPlayingScreen extends ConsumerWidget {
             end: Alignment.bottomCenter,
             colors: [
               HSLColor.fromAHSL(1, hue, 0.45, 0.28).toColor(),
-              AppColors.background,
+              Theme.of(context).scaffoldBackgroundColor,
             ],
             stops: const [0, 0.75],
           ),
@@ -76,7 +76,7 @@ class NowPlayingScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(icon: Icon(liked ? Icons.favorite : Icons.favorite_border, color: liked ? AppColors.accent : AppColors.textSecondary), onPressed: () => ref.read(libraryProvider.notifier).toggleLike(track)),
+                    IconButton(icon: Icon(liked ? Icons.favorite : Icons.favorite_border, color: liked ? Theme.of(context).colorScheme.primary : AppColors.textSecondary), onPressed: () => ref.read(libraryProvider.notifier).toggleLike(track)),
                     IconButton(
                       iconSize: 40,
                       icon: const Icon(Icons.skip_previous),

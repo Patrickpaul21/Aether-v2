@@ -25,7 +25,7 @@ class MiniPlayer extends ConsumerWidget {
         margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
