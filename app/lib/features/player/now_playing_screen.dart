@@ -6,6 +6,7 @@ import '../../core/cover_art.dart';
 import '../../core/library_state.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
+import 'lyrics_sheet.dart';
 import 'queue_sheet.dart';
 
 String _fmt(Duration d) {
@@ -141,14 +142,22 @@ class NowPlayingScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => showQueueSheet(context),
-                    icon: const Icon(Icons.queue_music),
-                    label: Text('Up next · ${s.upcoming.length}'),
-                    style: TextButton.styleFrom(foregroundColor: dim),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => showLyricsSheet(context),
+                      icon: const Icon(Icons.lyrics_outlined),
+                      label: const Text('Lyrics'),
+                      style: TextButton.styleFrom(foregroundColor: dim),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => showQueueSheet(context),
+                      icon: const Icon(Icons.queue_music),
+                      label: Text('Up next · ${s.upcoming.length}'),
+                      style: TextButton.styleFrom(foregroundColor: dim),
+                    ),
+                  ],
                 ),
                 const Spacer(),
               ],

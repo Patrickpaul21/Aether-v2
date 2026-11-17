@@ -9,6 +9,8 @@ Aether is an independent project. It is not affiliated with YouTube, Google, or 
 - FastAPI and Uvicorn (the Aether server)
 - yt-dlp (stream and search extraction on the server)
 
+- LRCLIB (lrclib.net): synced and plain lyrics
+
 ## Inspiration (ideas and structure only, no code copied)
 - Echo Music (EchoMusicApp/Echo-Music): how responsibilities are split into modules
 - Orpheon (kota-zo/Orpheon): extension system design

@@ -36,6 +36,7 @@ class ServerYoutubeSource implements MusicSource {
         artist: (m['artist'] as String?) ?? 'Unknown',
         coverUrl: (m['cover'] as String?) ?? '',
         source: 'youtube',
+        duration: (m['duration'] as num?)?.round(),
       );
     }).toList();
   }

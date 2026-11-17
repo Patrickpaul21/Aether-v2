@@ -4,6 +4,7 @@ class Track {
   final String artist;
   final String coverUrl;
   final String source;
+  final int? duration;
 
   const Track({
     required this.id,
@@ -11,6 +12,7 @@ class Track {
     required this.artist,
     required this.coverUrl,
     required this.source,
+    this.duration,
   });
 
   Map<String, dynamic> toJson() => {
@@ -19,6 +21,7 @@ class Track {
         'artist': artist,
         'coverUrl': coverUrl,
         'source': source,
+        'duration': duration,
       };
 
   factory Track.fromJson(Map<String, dynamic> j) => Track(
@@ -27,5 +30,6 @@ class Track {
         artist: j['artist'] as String,
         coverUrl: (j['coverUrl'] as String?) ?? '',
         source: (j['source'] as String?) ?? 'youtube',
+        duration: (j['duration'] as num?)?.round(),
       );
 }
