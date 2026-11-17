@@ -1,7 +1,27 @@
+import time
+
 from fastapi import FastAPI, HTTPException
 import yt_dlp
 
 app = FastAPI()
+
+CACHE_TTL = 30 * 60
+CACHE_MAX = 200
+_cache: dict[tuple, tuple[float, dict]] = {}
+
+
+def _cache_get(key):
+    hit = _cache.get(key)
+    if hit and time.time() - hit[0] < CACHE_TTL:
+        return hit[1]
+    return None
+
+
+def _cache_set(key, value):
+    _cache[key] = (time.time(), value)
+    if len(_cache) > CACHE_MAX:
+        oldest = min(_cache, key=lambda k: _cache[k][0])
+        del _cache[oldest]
 
 
 @app.get("/stream/{video_id}")
@@ -20,6 +40,11 @@ def get_stream(video_id: str):
 @app.get("/search")
 def search(q: str, limit: int = 15, max_duration: int = 900):
     limit = max(1, min(limit, 25))
+    key = (q.strip().lower(), limit, max_duration)
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
+
     opts = {"quiet": True, "extract_flat": True, "skip_download": True}
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -46,4 +71,6 @@ def search(q: str, limit: int = 15, max_duration: int = 900):
         else:
             other.append(item)
 
-    return {"results": (song_length + other)[:limit]}
+    result = {"results": (song_length + other)[:limit]}
+    _cache_set(key, result)
+    return result
