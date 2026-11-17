@@ -1,9 +1,10 @@
 import 'dart:math';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import '../sources/music_source.dart';
+import 'audio_handler.dart';
 import 'errors.dart';
 import 'library_state.dart';
 import 'track.dart';
@@ -59,6 +60,7 @@ class PlayerStatus {
 
 class PlayerNotifier extends Notifier<PlayerStatus> {
   late final AudioPlayer _player;
+  late final AetherAudioHandler _handler;
   int _request = 0;
   bool _fetching = false;
   final _random = Random();
@@ -68,9 +70,49 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
   @override
   PlayerStatus build() {
     _player = AudioPlayer();
+    _handler = ref.read(audioHandlerProvider);
     _player.playerStateStream.listen(_onPlayerState);
+    _handler.onPlay = () async {
+      if (state.track != null && state.error == null) _player.play();
+    };
+    _handler.onPause = () async {
+      _player.pause();
+    };
+    _handler.onNext = () async {
+      next();
+    };
+    _handler.onPrev = () async {
+      prev();
+    };
+    _handler.onStop = () async {
+      await _player.stop();
+    };
+    _handler.onSeek = (p) => seek(p);
     ref.onDispose(_player.dispose);
     return const PlayerStatus();
+  }
+
+  void _publish() {
+    final s = state;
+    if (s.track == null) return;
+    _handler.playbackState.add(PlaybackState(
+      controls: [
+        MediaControl.skipToPrevious,
+        s.isPlaying ? MediaControl.pause : MediaControl.play,
+        MediaControl.skipToNext,
+      ],
+      systemActions: const {MediaAction.seek},
+      androidCompactActionIndices: const [0, 1, 2],
+      processingState: s.isLoading
+          ? AudioProcessingState.loading
+          : (s.error != null
+              ? AudioProcessingState.idle
+              : AudioProcessingState.ready),
+      playing: s.isPlaying,
+      updatePosition: _player.position,
+      bufferedPosition: _player.bufferedPosition,
+      speed: 1.0,
+    ));
   }
 
   void _onPlayerState(PlayerState s) {
@@ -78,6 +120,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     final loading = s.processingState == ProcessingState.loading ||
         s.processingState == ProcessingState.buffering;
     state = state.copyWith(isPlaying: s.playing, isLoading: loading);
+    _publish();
     if (s.processingState == ProcessingState.completed && s.playing) {
       _onCompleted();
     }
@@ -112,24 +155,27 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     final t = q[i];
     final id = ++_request;
     _fetching = true;
+    final item = MediaItem(
+      id: t.id,
+      title: t.title,
+      artist: t.artist,
+      artUri: t.coverUrl.isEmpty ? null : Uri.parse(t.coverUrl),
+    );
+    _handler.mediaItem.add(item);
     state = state.copyWith(
         index: i, isPlaying: false, isLoading: true, error: null);
+    _publish();
     await _player.stop();
     try {
       final info = await ref.read(musicSourceProvider).getStream(t.id);
       if (id != _request) return;
-      await _player.setAudioSource(AudioSource.uri(
-        Uri.parse(info.url),
-        tag: MediaItem(
-          id: t.id,
-          title: t.title,
-          artist: t.artist,
-          artUri: t.coverUrl.isEmpty ? null : Uri.parse(t.coverUrl),
-        ),
-      ));
+      final dur =
+          await _player.setAudioSource(AudioSource.uri(Uri.parse(info.url)));
       if (id != _request) return;
       _fetching = false;
+      _handler.mediaItem.add(item.copyWith(duration: dur));
       state = state.copyWith(isPlaying: true, isLoading: false);
+      _publish();
       ref.read(libraryProvider.notifier).addToHistory(t);
       _player.play();
     } catch (e) {
@@ -137,6 +183,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
       _fetching = false;
       state = state.copyWith(
           isPlaying: false, isLoading: false, error: friendlyError(e));
+      _publish();
     }
   }
 
@@ -164,7 +211,10 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     }
   }
 
-  Future<void> seek(Duration position) => _player.seek(position);
+  Future<void> seek(Duration position) async {
+    await _player.seek(position);
+    _publish();
+  }
 
   void next() {
     final s = state;
@@ -180,7 +230,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     final s = state;
     if (s.queue.isEmpty) return;
     if (_player.position > const Duration(seconds: 3) || s.index == 0) {
-      _player.seek(Duration.zero);
+      seek(Duration.zero);
       return;
     }
     _playAt(s.index - 1);
