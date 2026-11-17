@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
@@ -5,6 +6,7 @@ import '../../core/cover_art.dart';
 import '../../core/library_state.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
+import 'queue_sheet.dart';
 
 String _fmt(Duration d) {
   final m = d.inMinutes;
@@ -21,10 +23,13 @@ class NowPlayingScreen extends ConsumerWidget {
     final track = s.track;
     if (track == null) return const Scaffold();
 
-    final notifier = ref.read(playerProvider.notifier);
+    final n = ref.read(playerProvider.notifier);
     final liked = ref.watch(libraryProvider).liked.any((t) => t.id == track.id);
+    final accent = Theme.of(context).colorScheme.primary;
+    final dim = AppColors.textSecondary;
     final hue = (track.id.hashCode % 360).abs().toDouble();
-    final artSize = MediaQuery.of(context).size.width - 48;
+    final size = MediaQuery.of(context).size;
+    final artSize = math.min(size.width - 48, size.height * 0.4);
 
     return Scaffold(
       body: Container(
@@ -53,34 +58,53 @@ class NowPlayingScreen extends ConsumerWidget {
                 ),
                 const Spacer(),
                 CoverArt(track: track, size: artSize),
-                const SizedBox(height: 32),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(track.title,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(track.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 22, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 4),
+                          Text(s.error ?? track.artist,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  color:
+                                      s.error != null ? Colors.redAccent : dim)),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                          liked ? Icons.favorite : Icons.favorite_border,
+                          color: liked ? accent : dim),
+                      onPressed: () =>
+                          ref.read(libraryProvider.notifier).toggleLike(track),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(s.error ?? track.artist,
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: s.error != null
-                              ? Colors.redAccent
-                              : AppColors.textSecondary)),
-                ),
-                const SizedBox(height: 16),
-                _ProgressBar(player: notifier.player),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                _ProgressBar(player: n.player),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(icon: Icon(liked ? Icons.favorite : Icons.favorite_border, color: liked ? Theme.of(context).colorScheme.primary : AppColors.textSecondary), onPressed: () => ref.read(libraryProvider.notifier).toggleLike(track)),
+                    IconButton(
+                      icon: Icon(Icons.shuffle,
+                          color: s.shuffle ? accent : dim),
+                      onPressed: n.toggleShuffle,
+                    ),
                     IconButton(
                       iconSize: 40,
                       icon: const Icon(Icons.skip_previous),
-                      onPressed: notifier.prev,
+                      onPressed: n.prev,
                     ),
                     Container(
                       width: 64,
@@ -98,16 +122,33 @@ class NowPlayingScreen extends ConsumerWidget {
                               color: Colors.black,
                               icon: Icon(
                                   s.isPlaying ? Icons.pause : Icons.play_arrow),
-                              onPressed: notifier.toggle,
+                              onPressed: n.toggle,
                             ),
                     ),
                     IconButton(
                       iconSize: 40,
                       icon: const Icon(Icons.skip_next),
-                      onPressed: notifier.next,
+                      onPressed: n.next,
                     ),
-                    const Icon(Icons.repeat, color: AppColors.textSecondary),
+                    IconButton(
+                      icon: Icon(
+                          s.repeat == QueueRepeat.one
+                              ? Icons.repeat_one
+                              : Icons.repeat,
+                          color: s.repeat == QueueRepeat.off ? dim : accent),
+                      onPressed: n.cycleRepeat,
+                    ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => showQueueSheet(context),
+                    icon: const Icon(Icons.queue_music),
+                    label: Text('Up next · ${s.upcoming.length}'),
+                    style: TextButton.styleFrom(foregroundColor: dim),
+                  ),
                 ),
                 const Spacer(),
               ],

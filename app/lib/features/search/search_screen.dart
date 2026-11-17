@@ -5,6 +5,7 @@ import '../../core/cover_art.dart';
 import '../../core/errors.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
+import '../../core/track_menu.dart';
 import '../../core/track.dart';
 import '../../sources/music_source.dart';
 
@@ -152,6 +153,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         return ListTile(
           onTap: () => playTrack(context, t, queue: _results),
           leading: CoverArt(track: t, size: 48),
+          trailing: IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () => showTrackMenu(context, t),
+          ),
           title: Text(t.title, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(t.artist,
               maxLines: 1,
