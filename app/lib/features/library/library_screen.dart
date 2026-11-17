@@ -4,6 +4,7 @@ import '../../core/cover_art.dart';
 import '../../core/library_state.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
+import '../../core/track_menu.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
@@ -11,6 +12,7 @@ class LibraryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final liked = ref.watch(libraryProvider).liked;
+    final accent = Theme.of(context).colorScheme.primary;
 
     return SafeArea(
       child: ListView(
@@ -66,10 +68,19 @@ class LibraryScreen extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: AppColors.textSecondary)),
-                trailing: IconButton(
-                  icon: Icon(Icons.favorite, color: Theme.of(context).colorScheme.primary),
-                  onPressed: () =>
-                      ref.read(libraryProvider.notifier).toggleLike(t),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.favorite, color: accent),
+                      onPressed: () =>
+                          ref.read(libraryProvider.notifier).toggleLike(t),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.more_vert),
+                      onPressed: () => showTrackMenu(context, t),
+                    ),
+                  ],
                 ),
               ),
         ],

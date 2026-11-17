@@ -5,6 +5,7 @@ import '../../core/cover_art.dart';
 import '../../core/library_state.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
+import '../../core/track_menu.dart';
 import '../../core/track.dart';
 
 String greeting() {
@@ -96,6 +97,7 @@ class QuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: () => playTrack(context, track, queue: queue),
+        onLongPress: () => showTrackMenu(context, track),
         child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -126,6 +128,7 @@ class ShelfCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: () => playTrack(context, track, queue: queue),
+        onLongPress: () => showTrackMenu(context, track),
         child: SizedBox(
           width: 140,
           child: Column(
