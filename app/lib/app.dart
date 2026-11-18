@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'features/home/home_screen.dart';
 import 'features/library/library_screen.dart';
+import 'features/library/playlist_screen.dart';
 import 'features/player/mini_player.dart';
 import 'features/search/search_screen.dart';
 import 'features/settings/settings_screen.dart';
@@ -9,18 +10,37 @@ import 'features/settings/settings_screen.dart';
 final router = GoRouter(
   initialLocation: '/home',
   routes: [
-    GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => Shell(shell: shell),
       branches: [
         StatefulShellBranch(routes: [
-          GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const HomeScreen(),
+          ),
         ]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/search', builder: (_, _) => const SearchScreen()),
+          GoRoute(
+            path: '/search',
+            builder: (context, state) => const SearchScreen(),
+          ),
         ]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/library', builder: (_, _) => const LibraryScreen()),
+          GoRoute(
+            path: '/library',
+            builder: (context, state) => const LibraryScreen(),
+            routes: [
+              GoRoute(
+                path: 'playlist/:id',
+                builder: (context, state) =>
+                    PlaylistScreen(id: state.pathParameters['id']!),
+              ),
+            ],
+          ),
         ]),
       ],
     ),

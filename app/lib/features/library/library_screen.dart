@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/cover_art.dart';
 import '../../core/library_state.dart';
 import '../../core/player_state.dart';
+import '../../core/playlist_sheets.dart';
+import '../../core/playlists_state.dart';
 import '../../core/theme.dart';
 import '../../core/track_menu.dart';
 
@@ -12,15 +15,33 @@ class LibraryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final liked = ref.watch(libraryProvider).liked;
+    final playlists = ref.watch(playlistsProvider);
     final accent = Theme.of(context).colorScheme.primary;
+    final tileColor = Theme.of(context).colorScheme.surfaceContainerHigh;
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          const Text('Your Library',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Expanded(
+                child: Text('Your Library',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                tooltip: 'New playlist',
+                onPressed: () async {
+                  final name = await promptPlaylistName(context);
+                  if (name == null) return;
+                  ref.read(playlistsProvider.notifier).create(name);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           ListTile(
             contentPadding: EdgeInsets.zero,
             onTap: liked.isEmpty
@@ -44,19 +65,48 @@ class LibraryScreen extends ConsumerWidget {
             subtitle: Text('Playlist · ${liked.length} songs',
                 style: const TextStyle(color: AppColors.textSecondary)),
           ),
-          const SizedBox(height: 8),
+          for (final p in playlists)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              onTap: () => context.push('/library/playlist/${p.id}'),
+              leading: p.tracks.isEmpty
+                  ? Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: tileColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Icon(Icons.queue_music,
+                          color: AppColors.textSecondary),
+                    )
+                  : CoverArt(track: p.tracks.first, size: 56),
+              title: Text(p.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text('Playlist · ${p.tracks.length} songs',
+                  style: const TextStyle(color: AppColors.textSecondary)),
+            ),
+          const SizedBox(height: 16),
           if (liked.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(
                 child: Text(
-                  'Tap the heart on a track to save it here.',
+                  'Tap the heart on a track to save it to Liked Songs.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
               ),
             )
-          else
+          else ...[
+            const Padding(
+              padding: EdgeInsets.only(top: 8, bottom: 4),
+              child: Text('Liked songs',
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w700)),
+            ),
             for (final t in liked)
               ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -83,6 +133,7 @@ class LibraryScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+          ],
         ],
       ),
     );

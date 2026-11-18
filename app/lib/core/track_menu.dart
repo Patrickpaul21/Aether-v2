@@ -3,10 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'cover_art.dart';
 import 'library_state.dart';
 import 'player_state.dart';
+import 'playlist_sheets.dart';
 import 'theme.dart';
 import 'track.dart';
 
-void showTrackMenu(BuildContext context, Track t) {
+void showTrackMenu(
+  BuildContext context,
+  Track t, {
+  VoidCallback? onRemove,
+  String removeLabel = 'Remove',
+}) {
   final container = ProviderScope.containerOf(context, listen: false);
   final player = container.read(playerProvider.notifier);
   final library = container.read(libraryProvider.notifier);
@@ -51,6 +57,14 @@ void showTrackMenu(BuildContext context, Track t) {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.playlist_add),
+            title: const Text('Add to playlist'),
+            onTap: () {
+              Navigator.pop(sheet);
+              showAddToPlaylistSheet(context, t);
+            },
+          ),
+          ListTile(
             leading: Icon(liked ? Icons.favorite : Icons.favorite_border),
             title: Text(liked ? 'Remove from liked songs' : 'Like'),
             onTap: () {
@@ -58,6 +72,15 @@ void showTrackMenu(BuildContext context, Track t) {
               done(sheet, liked ? 'Removed from liked songs' : 'Liked');
             },
           ),
+          if (onRemove != null)
+            ListTile(
+              leading: const Icon(Icons.remove_circle_outline),
+              title: Text(removeLabel),
+              onTap: () {
+                Navigator.pop(sheet);
+                onRemove();
+              },
+            ),
         ],
       ),
     ),
