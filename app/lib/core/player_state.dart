@@ -283,7 +283,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     final q = [...s.queue];
     final item = q.removeAt(base + from);
     final upcomingLen = q.length - base;
-    var target = to > from ? to - 1 : to;
+    var target = to;
     if (target > upcomingLen) target = upcomingLen;
     if (target < 0) target = 0;
     q.insert(base + target, item);
@@ -298,15 +298,35 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
 
   void toggleShuffle() {
     final s = state;
-    if (!s.shuffle && s.track != null && s.index < s.queue.length - 1) {
-      final rest = s.queue.sublist(s.index + 1)..shuffle(_random);
-      state = s.copyWith(
-        queue: [...s.queue.sublist(0, s.index + 1), ...rest],
-        shuffle: true,
-      );
-    } else {
-      state = s.copyWith(shuffle: !s.shuffle);
+    if (!s.shuffle) {
+      _orderBeforeShuffle = [...s.queue];
+      if (s.track != null && s.index < s.queue.length - 1) {
+        final rest = s.queue.sublist(s.index + 1)..shuffle(_random);
+        state = s.copyWith(
+          queue: [...s.queue.sublist(0, s.index + 1), ...rest],
+          shuffle: true,
+        );
+      } else {
+        state = s.copyWith(shuffle: true);
+      }
+      return;
     }
+    final original = _orderBeforeShuffle;
+    _orderBeforeShuffle = null;
+    final current = s.track;
+    if (original == null || current == null) {
+      state = s.copyWith(shuffle: false);
+      return;
+    }
+    final byId = {for (final t in s.queue) t.id: t};
+    final restored = <Track>[
+      for (final t in original)
+        if (byId.containsKey(t.id)) byId[t.id]!,
+    ];
+    final known = restored.map((t) => t.id).toSet();
+    restored.addAll(s.queue.where((t) => !known.contains(t.id)));
+    final i = restored.indexWhere((t) => t.id == current.id);
+    state = s.copyWith(queue: restored, index: i < 0 ? 0 : i, shuffle: false);
   }
 
   void cycleRepeat() {

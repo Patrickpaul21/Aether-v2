@@ -73,7 +73,7 @@ class QueueSheet extends ConsumerWidget {
                 : ReorderableListView.builder(
                     buildDefaultDragHandles: false,
                     itemCount: upcoming.length,
-                    onReorder: n.moveUpcoming,
+                    onReorderItem: n.moveUpcoming,
                     itemBuilder: (_, k) {
                       final t = upcoming[k];
                       return ListTile(
