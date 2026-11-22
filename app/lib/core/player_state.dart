@@ -63,6 +63,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
   late final AetherAudioHandler _handler;
   int _request = 0;
   bool _fetching = false;
+  int _failStreak = 0;
   final _random = Random();
   List<Track>? _orderBeforeShuffle;
 
@@ -175,6 +176,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
       if (id != _request) return;
       _fetching = false;
       _handler.mediaItem.add(item.copyWith(duration: dur));
+      _failStreak = 0;
       state = state.copyWith(isPlaying: true, isLoading: false);
       _publish();
       ref.read(libraryProvider.notifier).addToHistory(t);
@@ -182,9 +184,15 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     } catch (e) {
       if (id != _request) return;
       _fetching = false;
+      _failStreak++;
       state = state.copyWith(
           isPlaying: false, isLoading: false, error: friendlyError(e));
       _publish();
+      if (_failStreak < 3 && state.index < state.queue.length - 1) {
+        Future.delayed(const Duration(milliseconds: 900), () {
+          if (id == _request) _playAt(state.index + 1);
+        });
+      }
     }
   }
 
@@ -203,8 +211,19 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     await _playAt(i);
   }
 
+  void retry() {
+    if (state.index >= 0) {
+      _failStreak = 0;
+      _playAt(state.index);
+    }
+  }
+
   void toggle() {
-    if (state.track == null || state.error != null || state.isLoading) return;
+    if (state.track == null || state.isLoading) return;
+    if (state.error != null) {
+      retry();
+      return;
+    }
     if (_player.playing) {
       _player.pause();
     } else {

@@ -92,7 +92,7 @@ class NowPlayingScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _ProgressBar(player: n.player),
+                _ProgressBar(player: n.player, onSeek: n.seek),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -171,7 +171,8 @@ class NowPlayingScreen extends ConsumerWidget {
 
 class _ProgressBar extends StatefulWidget {
   final AudioPlayer player;
-  const _ProgressBar({required this.player});
+  final Future<void> Function(Duration) onSeek;
+  const _ProgressBar({required this.player, required this.onSeek});
 
   @override
   State<_ProgressBar> createState() => _ProgressBarState();
@@ -199,7 +200,7 @@ class _ProgressBarState extends State<_ProgressBar> {
                 max: ready ? maxMs : 1,
                 onChanged: ready ? (v) => setState(() => _drag = v) : null,
                 onChangeEnd: (v) async {
-                  await widget.player.seek(Duration(milliseconds: v.round()));
+                  await widget.onSeek(Duration(milliseconds: v.round()));
                   if (mounted) setState(() => _drag = null);
                 },
                 activeColor: Colors.white,
