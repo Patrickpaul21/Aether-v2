@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/widgets.dart';
@@ -7,6 +8,7 @@ import '../sources/music_source.dart';
 import 'audio_handler.dart';
 import 'errors.dart';
 import 'library_state.dart';
+import 'settings.dart';
 import 'track.dart';
 
 enum QueueRepeat { off, all, one }
@@ -63,6 +65,8 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
   late final AetherAudioHandler _handler;
   int _request = 0;
   bool _fetching = false;
+  Duration? _resumeAt;
+  DateTime _lastPosSave = DateTime.fromMillisecondsSinceEpoch(0);
   int _failStreak = 0;
   final _random = Random();
   List<Track>? _orderBeforeShuffle;
@@ -74,8 +78,9 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     _player = AudioPlayer();
     _handler = ref.read(audioHandlerProvider);
     _player.playerStateStream.listen(_onPlayerState);
+    _player.positionStream.listen(_onPosition);
     _handler.onPlay = () async {
-      if (state.track != null && state.error == null) _player.play();
+      if (state.error == null) _resume();
     };
     _handler.onPause = () async {
       _player.pause();
@@ -91,7 +96,63 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     };
     _handler.onSeek = (p) => seek(p);
     ref.onDispose(_player.dispose);
-    return const PlayerStatus();
+    return _restore();
+  }
+
+  PlayerStatus _restore() {
+    final prefs = ref.read(prefsProvider);
+    final raw = prefs.getString('session');
+    if (raw == null) return const PlayerStatus();
+    try {
+      final j = jsonDecode(raw) as Map<String, dynamic>;
+      final queue = (j['queue'] as List)
+          .map((e) => Track.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final index = (j['index'] as num).toInt();
+      if (queue.isEmpty || index < 0 || index >= queue.length) {
+        return const PlayerStatus();
+      }
+      _resumeAt = Duration(milliseconds: prefs.getInt('session_pos') ?? 0);
+      final repeatIndex = ((j['repeat'] as num?)?.toInt() ?? 0)
+          .clamp(0, QueueRepeat.values.length - 1)
+          .toInt();
+      return PlayerStatus(
+        queue: queue,
+        index: index,
+        shuffle: (j['shuffle'] as bool?) ?? false,
+        repeat: QueueRepeat.values[repeatIndex],
+      );
+    } catch (_) {
+      return const PlayerStatus();
+    }
+  }
+
+  void persistSession({bool resetPosition = false}) {
+    final s = state;
+    final prefs = ref.read(prefsProvider);
+    if (s.track == null) {
+      prefs.remove('session');
+      prefs.remove('session_pos');
+      return;
+    }
+    prefs.setString(
+      'session',
+      jsonEncode({
+        'queue': s.queue.map((t) => t.toJson()).toList(),
+        'index': s.index,
+        'shuffle': s.shuffle,
+        'repeat': s.repeat.index,
+      }),
+    );
+    if (resetPosition) prefs.setInt('session_pos', 0);
+  }
+
+  void _onPosition(Duration p) {
+    if (!_player.playing || _fetching) return;
+    final now = DateTime.now();
+    if (now.difference(_lastPosSave) < const Duration(seconds: 5)) return;
+    _lastPosSave = now;
+    ref.read(prefsProvider).setInt('session_pos', p.inMilliseconds);
   }
 
   void _publish() {
@@ -122,6 +183,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     final loading = s.processingState == ProcessingState.loading ||
         s.processingState == ProcessingState.buffering;
     state = state.copyWith(isPlaying: s.playing, isLoading: loading);
+    if (!s.playing) ref.read(prefsProvider).setInt('session_pos', _player.position.inMilliseconds);
     _publish();
     if (s.processingState == ProcessingState.completed && s.playing) {
       _onCompleted();
@@ -151,7 +213,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     ];
   }
 
-  Future<void> _playAt(int i) async {
+  Future<void> _playAt(int i, {Duration? startAt}) async {
     final q = state.queue;
     if (i < 0 || i >= q.length) return;
     final t = q[i];
@@ -172,7 +234,8 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
       final info = await ref.read(musicSourceProvider).getStream(t.id);
       if (id != _request) return;
       final dur =
-          await _player.setAudioSource(AudioSource.uri(Uri.parse(info.url)));
+          await _player.setAudioSource(AudioSource.uri(Uri.parse(info.url)),
+          initialPosition: startAt);
       if (id != _request) return;
       _fetching = false;
       _handler.mediaItem.add(item.copyWith(duration: dur));
@@ -227,8 +290,20 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     if (_player.playing) {
       _player.pause();
     } else {
-      _player.play();
+      _resume();
     }
+  }
+
+  void _resume() {
+    if (state.track == null || state.isLoading) return;
+    if (_player.processingState == ProcessingState.idle) {
+      final at = _resumeAt;
+      _resumeAt = null;
+      _failStreak = 0;
+      _playAt(state.index, startAt: at);
+      return;
+    }
+    _player.play();
   }
 
   Future<void> seek(Duration position) async {

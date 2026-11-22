@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/appearance.dart';
 import 'core/audio_handler.dart';
+import 'core/player_state.dart';
 import 'core/settings.dart';
 import 'core/theme.dart';
 
@@ -34,6 +35,17 @@ class AetherApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final a = ref.watch(appearanceProvider);
+    ref.listen<PlayerStatus>(playerProvider, (prev, next) {
+      if (prev == null) return;
+      if (!identical(prev.queue, next.queue) ||
+          prev.index != next.index ||
+          prev.shuffle != next.shuffle ||
+          prev.repeat != next.repeat) {
+        ref.read(playerProvider.notifier).persistSession(
+              resetPosition: prev.track?.id != next.track?.id,
+            );
+      }
+    });
     return MaterialApp.router(
       title: 'Aether',
       theme: buildTheme(accent: accentPresets[a.accent]!, amoled: a.amoled),
