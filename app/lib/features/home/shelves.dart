@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/track.dart';
-import '../../lyrics/lyrics_service.dart' show cleanArtist;
+import '../../core/text_clean.dart';
 import '../../sources/music_source.dart';
 
 class Shelf {

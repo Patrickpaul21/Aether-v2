@@ -61,6 +61,13 @@ class HomeScreen extends ConsumerWidget {
                     QuickTile(track: t, queue: history)
                 ],
               ),
+            if (history.isNotEmpty && history.length < 8)
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: Text('Tip: long-press any track for more options.',
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+              ),
             if (liked.isNotEmpty) ...[
               const _ShelfTitle('Liked songs'),
               SizedBox(height: 200, child: _TrackRow(tracks: liked)),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../core/player_state.dart';
+import '../core/text_clean.dart';
 import '../core/track.dart';
 
 class LyricLine {

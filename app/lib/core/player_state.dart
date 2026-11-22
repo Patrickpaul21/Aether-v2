@@ -64,6 +64,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
   int _request = 0;
   bool _fetching = false;
   final _random = Random();
+  List<Track>? _orderBeforeShuffle;
 
   AudioPlayer get player => _player;
 
