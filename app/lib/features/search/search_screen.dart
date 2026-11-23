@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/cover_art.dart';
 import '../../core/errors.dart';
 import '../../core/player_state.dart';
+import '../../core/recent_searches.dart';
 import '../../core/theme.dart';
 import '../../core/track_menu.dart';
 import '../../core/track.dart';
+import '../../core/youtube_link.dart';
 import '../../sources/music_source.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -55,7 +57,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       _error = null;
     });
     try {
-      final results = await ref.read(musicSourceProvider).search(q);
+      final linkId = parseVideoId(q);
+      final results = linkId != null
+          ? [await trackFromVideoId(linkId)]
+          : await ref.read(musicSourceProvider).search(q);
       if (id != _request) return;
       setState(() {
         _results = results;
@@ -69,6 +74,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         _loading = false;
       });
     }
+  }
+
+  void _remember() {
+    final q = _query.trim();
+    if (q.isEmpty || parseVideoId(q) != null) return;
+    ref.read(recentSearchesProvider.notifier).add(q);
   }
 
   @override
@@ -122,9 +133,45 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _body(bool hasQuery) {
     if (!hasQuery) {
-      return const Center(
-        child: Text('Search for songs and artists',
-            style: TextStyle(color: AppColors.textSecondary)),
+      final recents = ref.watch(recentSearchesProvider);
+      if (recents.isEmpty) {
+        return const Center(
+          child: Text('Search for songs and artists',
+              style: TextStyle(color: AppColors.textSecondary)),
+        );
+      }
+      return ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text('Recent searches',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      ref.read(recentSearchesProvider.notifier).clear(),
+                  child: const Text('Clear'),
+                ),
+              ],
+            ),
+          ),
+          for (final r in recents)
+            ListTile(
+              leading:
+                  const Icon(Icons.history, color: AppColors.textSecondary),
+              title: Text(r),
+              onTap: () {
+                _controller.text = r;
+                _controller.selection =
+                    TextSelection.collapsed(offset: r.length);
+                _onChanged(r);
+              },
+            ),
+        ],
       );
     }
     if (_loading && _results.isEmpty) {
@@ -151,7 +198,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       itemBuilder: (_, i) {
         final t = _results[i];
         return ListTile(
-          onTap: () => playTrack(context, t, queue: _results),
+          onTap: () {
+            _remember();
+            playTrack(context, t, queue: _results);
+          },
           leading: CoverArt(track: t, size: 48),
           trailing: IconButton(
             icon: const Icon(Icons.more_vert),
