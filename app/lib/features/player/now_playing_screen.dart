@@ -8,6 +8,7 @@ import '../../core/player_state.dart';
 import '../../core/theme.dart';
 import 'lyrics_sheet.dart';
 import 'queue_sheet.dart';
+import 'sleep_sheet.dart';
 
 String _fmt(Duration d) {
   final m = d.inMinutes;
@@ -150,6 +151,17 @@ class NowPlayingScreen extends ConsumerWidget {
                       icon: const Icon(Icons.lyrics_outlined),
                       label: const Text('Lyrics'),
                       style: TextButton.styleFrom(foregroundColor: dim),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        s.sleepEndsAt != null || s.sleepAtTrackEnd
+                            ? Icons.bedtime
+                            : Icons.bedtime_outlined,
+                        color: s.sleepEndsAt != null || s.sleepAtTrackEnd
+                            ? accent
+                            : dim,
+                      ),
+                      onPressed: () => showSleepSheet(context),
                     ),
                     TextButton.icon(
                       onPressed: () => showQueueSheet(context),

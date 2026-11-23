@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:audio_service/audio_service.dart';
@@ -23,6 +24,8 @@ class PlayerStatus {
   final String? error;
   final bool shuffle;
   final QueueRepeat repeat;
+  final DateTime? sleepEndsAt;
+  final bool sleepAtTrackEnd;
 
   const PlayerStatus({
     this.queue = const [],
@@ -32,6 +35,8 @@ class PlayerStatus {
     this.error,
     this.shuffle = false,
     this.repeat = QueueRepeat.off,
+    this.sleepEndsAt,
+    this.sleepAtTrackEnd = false,
   });
 
   Track? get track =>
@@ -48,6 +53,8 @@ class PlayerStatus {
     Object? error = _keep,
     bool? shuffle,
     QueueRepeat? repeat,
+    Object? sleepEndsAt = _keep,
+    bool? sleepAtTrackEnd,
   }) =>
       PlayerStatus(
         queue: queue ?? this.queue,
@@ -57,6 +64,10 @@ class PlayerStatus {
         error: identical(error, _keep) ? this.error : error as String?,
         shuffle: shuffle ?? this.shuffle,
         repeat: repeat ?? this.repeat,
+        sleepEndsAt: identical(sleepEndsAt, _keep)
+            ? this.sleepEndsAt
+            : sleepEndsAt as DateTime?,
+        sleepAtTrackEnd: sleepAtTrackEnd ?? this.sleepAtTrackEnd,
       );
 }
 
@@ -65,6 +76,7 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
   late final AetherAudioHandler _handler;
   int _request = 0;
   bool _fetching = false;
+  Timer? _sleepTimer;
   Duration? _resumeAt;
   DateTime _lastPosSave = DateTime.fromMillisecondsSinceEpoch(0);
   int _failStreak = 0;
@@ -155,6 +167,31 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
     ref.read(prefsProvider).setInt('session_pos', p.inMilliseconds);
   }
 
+  void setSleepTimer(Duration d) {
+    _sleepTimer?.cancel();
+    state = state.copyWith(
+        sleepEndsAt: DateTime.now().add(d), sleepAtTrackEnd: false);
+    _sleepTimer = Timer(d, _sleepNow);
+  }
+
+  void setSleepAtTrackEnd() {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+    state = state.copyWith(sleepEndsAt: null, sleepAtTrackEnd: true);
+  }
+
+  void cancelSleep() {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+    state = state.copyWith(sleepEndsAt: null, sleepAtTrackEnd: false);
+  }
+
+  void _sleepNow() {
+    _sleepTimer = null;
+    _player.pause();
+    state = state.copyWith(sleepEndsAt: null, sleepAtTrackEnd: false);
+  }
+
   void _publish() {
     final s = state;
     if (s.track == null) return;
@@ -192,6 +229,14 @@ class PlayerNotifier extends Notifier<PlayerStatus> {
 
   void _onCompleted() {
     final s = state;
+    if (s.sleepAtTrackEnd) {
+      _player.pause();
+      _player.seek(Duration.zero);
+      state = s.copyWith(
+          sleepEndsAt: null, sleepAtTrackEnd: false, isPlaying: false);
+      _publish();
+      return;
+    }
     if (s.repeat == QueueRepeat.one) {
       _player.seek(Duration.zero);
       _player.play();
