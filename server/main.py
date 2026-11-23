@@ -2,6 +2,7 @@ import time
 
 from fastapi import FastAPI, HTTPException
 import yt_dlp
+from yt_dlp.version import __version__ as YTDLP_VERSION
 
 app = FastAPI()
 
@@ -74,3 +75,12 @@ def search(q: str, limit: int = 15, max_duration: int = 900):
     result = {"results": (song_length + other)[:limit]}
     _cache_set(key, result)
     return result
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "yt_dlp": YTDLP_VERSION,
+        "cached_searches": len(_cache),
+    }

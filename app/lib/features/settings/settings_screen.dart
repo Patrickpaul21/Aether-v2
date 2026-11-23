@@ -51,7 +51,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     messenger.showSnackBar(const SnackBar(content: Text('Testing...')));
     try {
       final res = await http
-          .get(Uri.parse('$base/docs'))
+          .get(Uri.parse('$base/health'))
           .timeout(const Duration(seconds: 6));
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(SnackBar(
