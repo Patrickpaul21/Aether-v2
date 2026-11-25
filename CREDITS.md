@@ -11,6 +11,8 @@ Aether is an independent project. It is not affiliated with YouTube, Google, or 
 
 - LRCLIB (lrclib.net): synced and plain lyrics
 
+- ytmusicapi (YouTube Music song search on the server)
+
 ## Inspiration (ideas and structure only, no code copied)
 - Echo Music (EchoMusicApp/Echo-Music): how responsibilities are split into modules
 - Orpheon (kota-zo/Orpheon): extension system design
