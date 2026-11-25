@@ -2,6 +2,8 @@ import time
 
 from fastapi import FastAPI, HTTPException
 import yt_dlp
+
+import ytm
 from yt_dlp.version import __version__ as YTDLP_VERSION
 
 app = FastAPI()
@@ -45,6 +47,15 @@ def search(q: str, limit: int = 15, max_duration: int = 900):
     cached = _cache_get(key)
     if cached is not None:
         return cached
+
+    try:
+        songs = ytm.search_songs(q, limit)
+    except Exception:
+        songs = []
+    if songs:
+        result = {"results": songs}
+        _cache_set(key, result)
+        return result
 
     opts = {"quiet": True, "extract_flat": True, "skip_download": True}
     try:
