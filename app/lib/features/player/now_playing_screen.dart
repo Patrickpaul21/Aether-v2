@@ -6,6 +6,7 @@ import '../../core/cover_art.dart';
 import '../../core/library_state.dart';
 import '../../core/player_state.dart';
 import '../../core/theme.dart';
+import 'ambient_background.dart';
 import 'lyrics_sheet.dart';
 import 'queue_sheet.dart';
 import 'sleep_sheet.dart';
@@ -29,23 +30,12 @@ class NowPlayingScreen extends ConsumerWidget {
     final liked = ref.watch(libraryProvider).liked.any((t) => t.id == track.id);
     final accent = Theme.of(context).colorScheme.primary;
     final dim = AppColors.textSecondary;
-    final hue = (track.id.hashCode % 360).abs().toDouble();
     final size = MediaQuery.of(context).size;
     final artSize = math.min(size.width - 48, size.height * 0.4);
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              HSLColor.fromAHSL(1, hue, 0.45, 0.28).toColor(),
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-            stops: const [0, 0.75],
-          ),
-        ),
+      body: AmbientBackground(
+        track: track,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
